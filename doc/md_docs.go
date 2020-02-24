@@ -17,99 +17,181 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/spf13/cobra"
 )
 
-func printOptions(buf *bytes.Buffer, cmd *cobra.Command, name string) error {
-	flags := cmd.NonInheritedFlags()
-	flags.SetOutput(buf)
-	if flags.HasAvailableFlags() {
-		buf.WriteString("### Options\n\n```\n")
-		flags.PrintDefaults()
-		buf.WriteString("```\n\n")
-	}
-
-	parentFlags := cmd.InheritedFlags()
-	parentFlags.SetOutput(buf)
-	if parentFlags.HasAvailableFlags() {
-		buf.WriteString("### Options inherited from parent commands\n\n```\n")
-		parentFlags.PrintDefaults()
-		buf.WriteString("```\n\n")
-	}
-	return nil
+type TemplateCmd struct {
+	Name          string
+	Short         string
+	Long          string
+	UseLine       string
+	Example       string
+	Flags         string
+	ParentFlags   string
+	ParentLink    string
+	ChildrenLinks []string
+	HeaderScale   int
 }
 
-// GenMarkdown creates markdown output.
-func GenMarkdown(cmd *cobra.Command, w io.Writer) error {
-	return GenMarkdownCustom(cmd, w, func(s string) string { return s })
-}
-
-// GenMarkdownCustom creates custom markdown output.
-func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) string) error {
-	cmd.InitDefaultHelpCmd()
-	cmd.InitDefaultHelpFlag()
-
-	buf := new(bytes.Buffer)
+func generateStruct(cmd *cobra.Command, linkHandler func(string) string) *TemplateCmd {
 	name := cmd.CommandPath()
-
 	short := cmd.Short
 	long := cmd.Long
 	if len(long) == 0 {
 		long = short
 	}
 
-	buf.WriteString("## " + name + "\n\n")
-	buf.WriteString(short + "\n\n")
-	buf.WriteString("### Synopsis\n\n")
-	buf.WriteString(long + "\n\n")
-
+	var useLine string
 	if cmd.Runnable() {
-		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmd.UseLine()))
+		useLine = cmd.UseLine()
 	}
 
+	var example string
 	if len(cmd.Example) > 0 {
-		buf.WriteString("### Examples\n\n")
-		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmd.Example))
+		example = cmd.Example
 	}
 
-	if err := printOptions(buf, cmd, name); err != nil {
-		return err
+	buf := new(bytes.Buffer)
+
+	var flagString string
+	flags := cmd.NonInheritedFlags()
+	flags.SetOutput(buf)
+	if flags.HasAvailableFlags() {
+		flags.PrintDefaults()
+		flagString = buf.String()
+		buf.Reset()
 	}
-	if hasSeeAlso(cmd) {
-		buf.WriteString("### SEE ALSO\n\n")
-		if cmd.HasParent() {
-			parent := cmd.Parent()
-			pname := parent.CommandPath()
-			link := pname + ".md"
-			link = strings.Replace(link, " ", "_", -1)
-			buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", pname, linkHandler(link), parent.Short))
-			cmd.VisitParents(func(c *cobra.Command) {
-				if c.DisableAutoGenTag {
-					cmd.DisableAutoGenTag = c.DisableAutoGenTag
-				}
-			})
+
+	var parentFlagString string
+	parentFlags := cmd.InheritedFlags()
+	parentFlags.SetOutput(buf)
+	if parentFlags.HasAvailableFlags() {
+		parentFlags.PrintDefaults()
+		parentFlagString = buf.String()
+		buf.Reset()
+	}
+
+	headerScale := 0
+	var parentLink string
+	if cmd.HasParent() {
+		parent := cmd.Parent()
+		pname := parent.CommandPath()
+		link := pname + ".md"
+		link = strings.Replace(link, " ", "_", -1)
+		buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", pname, linkHandler(link), parent.Short))
+		parentLink = buf.String()
+		buf.Reset()
+
+		headerScale = 1
+		for parent.HasParent() {
+			headerScale += 1
+			parent = parent.Parent()
+		}
+	}
+
+	var childrenLinks []string
+	children := cmd.Commands()
+	sort.Sort(byName(children))
+
+	for _, child := range children {
+		var childLink string
+		if !child.IsAvailableCommand() || child.IsAdditionalHelpTopicCommand() {
+			continue
+		}
+		cname := name + " " + child.Name()
+		link := cname + ".md"
+		link = strings.Replace(link, " ", "_", -1)
+		buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", cname, linkHandler(link), child.Short))
+
+		childLink = buf.String()
+		childrenLinks = append(childrenLinks, childLink)
+		buf.Reset()
+	}
+
+	return &TemplateCmd{
+		Name:          name,
+		Short:         short,
+		Long:          long,
+		UseLine:       useLine,
+		Example:       example,
+		Flags:         flagString,
+		ParentFlags:   parentFlagString,
+		ParentLink:    parentLink,
+		ChildrenLinks: childrenLinks,
+		HeaderScale:   headerScale,
+	}
+}
+
+func printOptions(buf *bytes.Buffer, cmdStruct *TemplateCmd) error {
+	if len(cmdStruct.Flags) > 0 {
+		buf.WriteString(fmt.Sprintf("### Options\n\n```\n%s```\n\n", cmdStruct.Flags))
+	}
+
+	if len(cmdStruct.ParentFlags) > 0 {
+		buf.WriteString(fmt.Sprintf("### Options inherited from parent commands\n\n```\n%s```\n\n", cmdStruct.ParentFlags))
+	}
+	return nil
+}
+
+// GenMarkdown creates markdown output.
+func GenMarkdown(cmd *cobra.Command, w io.Writer) error {
+	return GenMarkdownCustom(cmd, w, func(s string) string { return s }, nil)
+}
+
+// GenMarkdownCustom creates custom markdown output.
+func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) string, template *template.Template) error {
+	cmd.InitDefaultHelpCmd()
+	cmd.InitDefaultHelpFlag()
+
+	buf := new(bytes.Buffer)
+
+	cmdStruct := generateStruct(cmd, linkHandler)
+	if template != nil {
+		return writeToTemplate(cmdStruct, template, buf)
+	} else {
+		buf.WriteString("## " + cmdStruct.Name + "\n\n")
+		buf.WriteString(cmdStruct.Short + "\n\n")
+		buf.WriteString("### Synopsis\n\n")
+		buf.WriteString(cmdStruct.Long + "\n\n")
+
+		if len(cmdStruct.UseLine) > 0 {
+			buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmdStruct.UseLine))
 		}
 
-		children := cmd.Commands()
-		sort.Sort(byName(children))
+		if len(cmdStruct.Example) > 0 {
+			buf.WriteString("### Examples\n\n")
+			buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmdStruct.Example))
+		}
 
-		for _, child := range children {
-			if !child.IsAvailableCommand() || child.IsAdditionalHelpTopicCommand() {
-				continue
+		if err := printOptions(buf, cmdStruct); err != nil {
+			return err
+		}
+		if len(cmdStruct.ParentLink) > 0 || len(cmdStruct.ChildrenLinks) > 0 {
+			buf.WriteString("### SEE ALSO\n\n")
+			if len(cmdStruct.ParentLink) > 0 {
+				buf.WriteString(cmdStruct.ParentLink)
+				cmd.VisitParents(func(c *cobra.Command) {
+					if c.DisableAutoGenTag {
+						cmd.DisableAutoGenTag = c.DisableAutoGenTag
+					}
+				})
 			}
-			cname := name + " " + child.Name()
-			link := cname + ".md"
-			link = strings.Replace(link, " ", "_", -1)
-			buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", cname, linkHandler(link), child.Short))
+
+			for _, childLink := range cmdStruct.ChildrenLinks {
+				buf.WriteString(childLink)
+			}
+			buf.WriteString("\n")
 		}
-		buf.WriteString("\n")
 	}
+
 	if !cmd.DisableAutoGenTag {
 		buf.WriteString("###### Auto generated by spf13/cobra on " + time.Now().Format("2-Jan-2006") + "\n")
 	}
@@ -152,8 +234,16 @@ func GenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender, linkHa
 	if _, err := io.WriteString(f, filePrepender(filename)); err != nil {
 		return err
 	}
-	if err := GenMarkdownCustom(cmd, f, linkHandler); err != nil {
+	if err := GenMarkdownCustom(cmd, f, linkHandler, nil); err != nil {
 		return err
+	}
+	return nil
+}
+
+func writeToTemplate(cmdStruct *TemplateCmd, template *template.Template, buf *bytes.Buffer) error {
+	err := template.Execute(buf, cmdStruct)
+	if err != nil {
+		log.Println("executing template:", err)
 	}
 	return nil
 }
