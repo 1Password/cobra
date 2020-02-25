@@ -50,9 +50,7 @@ func generateStruct(cmd *cobra.Command, linkHandler func(string) string) *Templa
 	}
 
 	var useLine string
-	if cmd.Runnable() {
-		useLine = cmd.UseLine()
-	}
+	useLine = cmd.UseLine()
 
 	var example string
 	if len(cmd.Example) > 0 {
@@ -154,15 +152,19 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string)
 	buf := new(bytes.Buffer)
 
 	cmdStruct := generateStruct(cmd, linkHandler)
+
 	if template != nil {
-		return writeToTemplate(cmdStruct, template, buf)
+		log.Println("Please make sure to add the generation tag to your output to properly credit spf13/cobra")
+		cmd.DisableAutoGenTag = true
+		writeToTemplate(cmdStruct, template, buf)
+
 	} else {
 		buf.WriteString("## " + cmdStruct.Name + "\n\n")
 		buf.WriteString(cmdStruct.Short + "\n\n")
 		buf.WriteString("### Synopsis\n\n")
 		buf.WriteString(cmdStruct.Long + "\n\n")
 
-		if len(cmdStruct.UseLine) > 0 {
+		if cmd.Runnable() && len(cmdStruct.UseLine) > 0 {
 			buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmdStruct.UseLine))
 		}
 
