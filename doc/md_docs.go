@@ -38,10 +38,11 @@ type TemplateCmd struct {
 	ParentFlags   string
 	ParentLink    string
 	ChildrenLinks []string
+	RelatedLinks  []string
 	HeaderScale   int
 }
 
-func generateStruct(cmd *cobra.Command, linkHandler func(string) string) *TemplateCmd {
+func generateStruct(cmd *cobra.Command, relatedCmds []*cobra.Command, linkHandler func(string) string) *TemplateCmd {
 	name := cmd.CommandPath()
 	short := cmd.Short
 	long := cmd.Long
@@ -141,20 +142,19 @@ func printOptions(buf *bytes.Buffer, cmdStruct *TemplateCmd) error {
 
 // GenMarkdown creates markdown output.
 func GenMarkdown(cmd *cobra.Command, w io.Writer) error {
-	return GenMarkdownCustom(cmd, w, func(s string) string { return s }, nil)
+	return GenMarkdownCustom(cmd, w, func(s string) string { return s }, nil, nil)
 }
 
 // GenMarkdownCustom creates custom markdown output.
-func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) string, template *template.Template) error {
+func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) string, template *template.Template, relatedCmds []*cobra.Command) error {
 	cmd.InitDefaultHelpCmd()
 	cmd.InitDefaultHelpFlag()
 
 	buf := new(bytes.Buffer)
 
-	cmdStruct := generateStruct(cmd, linkHandler)
+	cmdStruct := generateStruct(cmd, relatedCmds, linkHandler)
 
 	if template != nil {
-		log.Println("Please make sure to add the generation tag to your output to properly credit spf13/cobra")
 		cmd.DisableAutoGenTag = true
 		writeToTemplate(cmdStruct, template, buf)
 
@@ -236,7 +236,7 @@ func GenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender, linkHa
 	if _, err := io.WriteString(f, filePrepender(filename)); err != nil {
 		return err
 	}
-	if err := GenMarkdownCustom(cmd, f, linkHandler, nil); err != nil {
+	if err := GenMarkdownCustom(cmd, f, linkHandler, nil, nil); err != nil {
 		return err
 	}
 	return nil
