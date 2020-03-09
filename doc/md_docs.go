@@ -25,7 +25,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/spf13/cobra"
+	"github.com/1password/cobra"
 )
 
 type TemplateCmd struct {
