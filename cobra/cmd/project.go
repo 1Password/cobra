@@ -5,7 +5,7 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/spf13/cobra/cobra/tpl"
+	"github.com/1password/cobra/cobra/tpl"
 )
 
 // Project contains name, license and paths to projects.

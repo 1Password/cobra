@@ -18,7 +18,7 @@ import (
 	"os"
 	"unicode"
 
-	"github.com/spf13/cobra"
+	"github.com/1password/cobra"
 )
 
 var (
