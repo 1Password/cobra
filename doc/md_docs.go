@@ -44,7 +44,7 @@ type TemplateCmd struct {
 	HeaderScale   int
 }
 
-func generateStruct(cmd *cobra.Command, linkHandler func(string) string) *TemplateCmd {
+func generateStruct(cmd *cobra.Command, relatedCmds []*cobra.Command, linkHandler func(string) string) *TemplateCmd {
 	name := cmd.CommandPath()
 	short := cmd.Short
 	long := cmd.Long
@@ -127,6 +127,21 @@ func generateStruct(cmd *cobra.Command, linkHandler func(string) string) *Templa
 		buf.Reset()
 	}
 
+	var relatedLinks []string
+	sort.Sort(byName(relatedCmds))
+
+	for _, relCmd := range relatedCmds {
+		var relatedLink string
+		rname := relCmd.CommandPath()
+		link := rname + ".md"
+		link = strings.Replace(link, " ", "_", -1)
+		buf.WriteString(fmt.Sprintf("* [%s](%s)\t - %s\n", rname, linkHandler(link), relCmd.Short))
+
+		relatedLink = buf.String()
+		relatedLinks = append(relatedLinks, relatedLink)
+		buf.Reset()
+	}
+
 	return &TemplateCmd{
 		Name:          name,
 		Short:         short,
@@ -138,6 +153,7 @@ func generateStruct(cmd *cobra.Command, linkHandler func(string) string) *Templa
 		ParentFlags:   parentFlagString,
 		ParentLink:    parentLink,
 		ChildrenLinks: childrenLinks,
+		RelatedLinks:  relatedLinks,
 		HeaderScale:   headerScale,
 	}
 }
@@ -155,17 +171,17 @@ func printOptions(buf *bytes.Buffer, cmdStruct *TemplateCmd) error {
 
 // GenMarkdown creates markdown output.
 func GenMarkdown(cmd *cobra.Command, w io.Writer) error {
-	return GenMarkdownCustom(cmd, w, func(s string) string { return s }, nil)
+	return GenMarkdownCustom(cmd, nil, w, func(s string) string { return s }, nil)
 }
 
 // GenMarkdownCustom creates custom markdown output.
-func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) string, template *template.Template) error {
+func GenMarkdownCustom(cmd *cobra.Command, relatedCommands []*cobra.Command, w io.Writer, linkHandler func(string) string, template *template.Template) error {
 	cmd.InitDefaultHelpCmd()
 	cmd.InitDefaultHelpFlag()
 
 	buf := new(bytes.Buffer)
 
-	cmdStruct := generateStruct(cmd, linkHandler)
+	cmdStruct := generateStruct(cmd, relatedCommands, linkHandler)
 
 	if template != nil {
 		cmd.DisableAutoGenTag = true
@@ -249,7 +265,7 @@ func GenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender, linkHa
 	if _, err := io.WriteString(f, filePrepender(filename)); err != nil {
 		return err
 	}
-	if err := GenMarkdownCustom(cmd, f, linkHandler, nil); err != nil {
+	if err := GenMarkdownCustom(cmd, nil, f, linkHandler, nil); err != nil {
 		return err
 	}
 	return nil
