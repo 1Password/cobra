@@ -129,7 +129,6 @@ func generateStruct(cmd *cobra.Command, linkHandler func(string) string) *Templa
 
 	var relatedLinks []string
 	relatedCmds := cmd.RelatedCommands()
-	sort.Sort(byName(relatedCmds))
 
 	for _, relCmd := range relatedCmds {
 		var relatedLink string
