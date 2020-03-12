@@ -1127,7 +1127,6 @@ func (c *Command) AddCommand(cmds ...*Command) {
 
 // RelatedCommands returns a sorted slice of related commands.
 func (c *Command) RelatedCommands() []*Command {
-	sort.Sort(commandSorterByName(c.relatedCommands))
 	return c.relatedCommands
 }
 
