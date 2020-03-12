@@ -167,6 +167,8 @@ type Command struct {
 		called bool
 	}
 
+	relatedCommands []*Command
+
 	// args is actual args parsed from flags.
 	args []string
 	// flagErrorBuf contains all error messages from pflag.
@@ -1120,6 +1122,22 @@ func (c *Command) AddCommand(cmds ...*Command) {
 		}
 		c.commands = append(c.commands, x)
 		c.commandsAreSorted = false
+	}
+}
+
+// RelatedCommands returns a sorted slice of related commands.
+func (c *Command) RelatedCommands() []*Command {
+	sort.Sort(commandSorterByName(c.relatedCommands))
+	return c.relatedCommands
+}
+
+// AddRelatedCommand adds one or more related commands to this command.
+func (c *Command) AddRelatedCommand(cmds ...*Command) {
+	for i, x := range cmds {
+		if cmds[i] == c {
+			panic("Command can't be related to itself")
+		}
+		c.relatedCommands = append(c.relatedCommands, x)
 	}
 }
 

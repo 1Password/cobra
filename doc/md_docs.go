@@ -44,7 +44,7 @@ type TemplateCmd struct {
 	HeaderScale   int
 }
 
-func generateStruct(cmd *cobra.Command, relatedCmds []*cobra.Command, linkHandler func(string) string) *TemplateCmd {
+func generateStruct(cmd *cobra.Command, linkHandler func(string) string) *TemplateCmd {
 	name := cmd.CommandPath()
 	short := cmd.Short
 	long := cmd.Long
@@ -128,10 +128,14 @@ func generateStruct(cmd *cobra.Command, relatedCmds []*cobra.Command, linkHandle
 	}
 
 	var relatedLinks []string
+	relatedCmds := cmd.RelatedCommands()
 	sort.Sort(byName(relatedCmds))
 
 	for _, relCmd := range relatedCmds {
 		var relatedLink string
+		if !relCmd.IsAvailableCommand() || relCmd.IsAdditionalHelpTopicCommand() {
+			continue
+		}
 		rname := relCmd.CommandPath()
 		link := rname + ".md"
 		link = strings.Replace(link, " ", "_", -1)
@@ -171,17 +175,17 @@ func printOptions(buf *bytes.Buffer, cmdStruct *TemplateCmd) error {
 
 // GenMarkdown creates markdown output.
 func GenMarkdown(cmd *cobra.Command, w io.Writer) error {
-	return GenMarkdownCustom(cmd, nil, w, func(s string) string { return s }, nil)
+	return GenMarkdownCustom(cmd, w, func(s string) string { return s }, nil)
 }
 
 // GenMarkdownCustom creates custom markdown output.
-func GenMarkdownCustom(cmd *cobra.Command, relatedCommands []*cobra.Command, w io.Writer, linkHandler func(string) string, template *template.Template) error {
+func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string) string, template *template.Template) error {
 	cmd.InitDefaultHelpCmd()
 	cmd.InitDefaultHelpFlag()
 
 	buf := new(bytes.Buffer)
 
-	cmdStruct := generateStruct(cmd, relatedCommands, linkHandler)
+	cmdStruct := generateStruct(cmd, linkHandler)
 
 	if template != nil {
 		cmd.DisableAutoGenTag = true
@@ -265,7 +269,7 @@ func GenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender, linkHa
 	if _, err := io.WriteString(f, filePrepender(filename)); err != nil {
 		return err
 	}
-	if err := GenMarkdownCustom(cmd, nil, f, linkHandler, nil); err != nil {
+	if err := GenMarkdownCustom(cmd, f, linkHandler, nil); err != nil {
 		return err
 	}
 	return nil
