@@ -20,8 +20,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -72,11 +72,9 @@ func generateStruct(cmd *cobra.Command, linkHandler func(string) string) *Templa
 	}
 
 	var flagSlice []string
-	flagSliceString := strconv.Quote(flagString)
-	flagSlice = strings.SplitN(flagSliceString, `\n`, -1)
-	for i, flag := range flagSlice {
-		flagSlice[i] = strings.Trim(flag, "\" ")
-	}
+	flagSplitter := regexp.MustCompile("\n *[^-]")
+	numberOfFlags := strings.Count(flagString, "--")
+	flagSlice = flagSplitter.Split(flagString, numberOfFlags)
 	if flagSlice[len(flagSlice)-1] == "" {
 		flagSlice = flagSlice[:len(flagSlice)-1]
 	}
