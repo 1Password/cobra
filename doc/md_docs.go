@@ -41,6 +41,7 @@ type TemplateCmd struct {
 	ParentLink    string
 	ChildrenLinks []string
 	RelatedLinks  []string
+	CommandLink   string
 	HeaderScale   int
 }
 
@@ -143,6 +144,13 @@ func generateStruct(cmd *cobra.Command, linkHandler func(string) string) *Templa
 		buf.Reset()
 	}
 
+	var commandLink string
+	link := name + ".md"
+	link = strings.Replace(link, " ", "_", -1)
+	buf.WriteString(fmt.Sprintf("%s", linkHandler(link)))
+	commandLink = buf.String()
+	buf.Reset()
+
 	return &TemplateCmd{
 		Name:          name,
 		Short:         short,
@@ -155,6 +163,7 @@ func generateStruct(cmd *cobra.Command, linkHandler func(string) string) *Templa
 		ParentLink:    parentLink,
 		ChildrenLinks: childrenLinks,
 		RelatedLinks:  relatedLinks,
+		CommandLink:   commandLink,
 		HeaderScale:   headerScale,
 	}
 }
