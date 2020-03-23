@@ -73,11 +73,16 @@ func generateStruct(cmd *cobra.Command, linkHandler func(string) string) *Templa
 	}
 
 	var flagSlice []string
-	flagSplitter := regexp.MustCompile("\n *[^-]")
+	flagSplitter := regexp.MustCompile("\n *-") // ideally change this
 	numberOfFlags := strings.Count(flagString, "--")
 	flagSlice = flagSplitter.Split(flagString, numberOfFlags)
 	if flagSlice[len(flagSlice)-1] == "" {
 		flagSlice = flagSlice[:len(flagSlice)-1]
+	}
+	for i, flag := range flagSlice {
+		if i > 0 {
+			flagSlice[i] = "-" + flag
+		}
 	}
 
 	var parentFlagString string
