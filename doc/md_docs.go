@@ -73,7 +73,7 @@ func generateCmdTemplate(cmd *cobra.Command, linkHandler func(string) string) *C
 	}
 
 	var flagSlice []string
-	flagSplitter := regexp.MustCompile("\n *-") // ideally change this
+	flagSplitter := regexp.MustCompile("\n *-") // clips first '-' in flags starting the second flag
 	numberOfFlags := strings.Count(flagString, "--")
 	flagSlice = flagSplitter.Split(flagString, numberOfFlags)
 	if flagSlice[len(flagSlice)-1] == "" {
@@ -81,7 +81,7 @@ func generateCmdTemplate(cmd *cobra.Command, linkHandler func(string) string) *C
 	}
 	for i, flag := range flagSlice {
 		if i > 0 {
-			flagSlice[i] = "-" + flag
+			flagSlice[i] = "-" + flag // add clipped '-' back to flags
 		}
 	}
 
