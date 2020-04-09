@@ -166,7 +166,7 @@ type Command struct {
 		name   string
 		called bool
 	}
-
+	// related commands is the list of commands related to this command.
 	relatedCommands []*Command
 
 	// args is actual args parsed from flags.
@@ -1125,7 +1125,7 @@ func (c *Command) AddCommand(cmds ...*Command) {
 	}
 }
 
-// RelatedCommands returns a sorted slice of related commands.
+// RelatedCommands returns a slice of related commands.
 func (c *Command) RelatedCommands() []*Command {
 	return c.relatedCommands
 }
