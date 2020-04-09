@@ -1,4 +1,4 @@
-module github.com/1password/cobra
+module github.com/spf13/cobra
 
 go 1.12
 

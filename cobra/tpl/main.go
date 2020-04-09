@@ -24,7 +24,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/1password/cobra"
+	"github.com/spf13/cobra"
 	"os"
 {{ if .Viper }}
 	homedir "github.com/mitchellh/go-homedir"
@@ -117,7 +117,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/1password/cobra"
+	"github.com/spf13/cobra"
 )
 
 // {{ .CmdName }}Cmd represents the {{ .CmdName }} command

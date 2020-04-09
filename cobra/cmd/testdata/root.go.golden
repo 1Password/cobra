@@ -17,7 +17,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/1password/cobra"
+	"github.com/spf13/cobra"
 	"os"
 
 	homedir "github.com/mitchellh/go-homedir"

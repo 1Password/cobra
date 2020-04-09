@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/1password/cobra"
+	"github.com/spf13/cobra"
 )
 
 func translate(in string) string {
