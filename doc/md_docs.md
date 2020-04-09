@@ -113,3 +113,30 @@ linkHandler := func(name string) string {
 	return "/commands/" + strings.ToLower(base) + "/"
 }
 ```
+
+### Customize the output with a Go template
+
+You can also provide your own Go template and pass it into `GenMarkdownCustomTemplate`:
+
+```go
+func GenMarkdownCustomTemplate(cmd *cobra.Command, w io.Writer, linkHandler func(string) string, template *template.Template) error {
+	//...
+}
+```
+
+The available fields are:
+```go
+Name          string   // full path to the command
+Short         string   // short description of the command
+Long          string   // long description of the command
+UseLine       string   // full usage for a given command (including parents)
+Example       string   // examples of how to use the command
+Flags         string   // default values of all non-inherited flags as a string
+FlagSlice     []string // Flags represented as a slice
+ParentFlags   string   // default values of all inherited flags as a string
+ParentLink    string   // rendered internal link to the parent command
+ChildrenLinks []string // rendered internal links to the child commands as a slice
+RelatedLinks  []string // rendered internal links to the related commands as a slice
+CommandLink   string   // rendered internal link to the command
+HeaderScale   int      // integer scale indicating depth of the current command
+```

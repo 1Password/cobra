@@ -30,19 +30,19 @@ import (
 )
 
 type CmdTemplate struct {
-	Name          string
-	Short         string
-	Long          string
-	UseLine       string
-	Example       string
-	Flags         string
-	FlagSlice     []string
-	ParentFlags   string
-	ParentLink    string
-	ChildrenLinks []string
-	RelatedLinks  []string
-	CommandLink   string
-	HeaderScale   int
+	Name          string   // full path to the command
+	Short         string   // short description of the command
+	Long          string   // long description of the command
+	UseLine       string   // full usage for a given command (including parents)
+	Example       string   // examples of how to use the command
+	Flags         string   // default values of all non-inherited flags as a string
+	FlagSlice     []string // Flags represented as a slice
+	ParentFlags   string   // default values of all inherited flags as a string
+	ParentLink    string   // rendered internal link to the parent command
+	ChildrenLinks []string // rendered internal links to the child commands as a slice
+	RelatedLinks  []string // rendered internal links to the related commands as a slice
+	CommandLink   string   // rendered internal link to the command
+	HeaderScale   int      // integer scale indicating depth of the current command
 }
 
 func generateCmdTemplate(cmd *cobra.Command, linkHandler func(string) string) *CmdTemplate {
