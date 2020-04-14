@@ -28,6 +28,8 @@ func init() {
 
 	echoCmd.AddCommand(timesCmd, echoSubCmd, deprecatedCmd)
 	rootCmd.AddCommand(printCmd, echoCmd)
+
+	echoCmd.AddRelatedCommand(printCmd)
 }
 
 var rootCmd = &cobra.Command{
@@ -71,6 +73,7 @@ var printCmd = &cobra.Command{
 	Use:   "print [string to print]",
 	Short: "Print anything to the screen",
 	Long:  `an absolutely utterly useless command for testing.`,
+	Run:   emptyRun,
 }
 
 func checkStringContains(t *testing.T, got, expected string) {
