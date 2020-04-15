@@ -29,7 +29,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type CmdTemplate struct {
+type CmdOutline struct {
 	Name          string   // full path to the command
 	Short         string   // short description of the command
 	Long          string   // long description of the command
@@ -45,7 +45,7 @@ type CmdTemplate struct {
 	HeaderScale   int      // integer scale indicating depth of the current command
 }
 
-func generateCmdTemplate(cmd *cobra.Command, linkHandler func(string) string) *CmdTemplate {
+func generateCmdOutline(cmd *cobra.Command, linkHandler func(string) string) *CmdOutline {
 	name := cmd.CommandPath()
 	short := cmd.Short
 	long := cmd.Long
@@ -156,7 +156,7 @@ func generateCmdTemplate(cmd *cobra.Command, linkHandler func(string) string) *C
 	commandLink = buf.String()
 	buf.Reset()
 
-	return &CmdTemplate{
+	return &CmdOutline{
 		Name:          name,
 		Short:         short,
 		Long:          long,
@@ -173,7 +173,7 @@ func generateCmdTemplate(cmd *cobra.Command, linkHandler func(string) string) *C
 	}
 }
 
-func printOptions(buf *bytes.Buffer, cmdStruct *CmdTemplate) error {
+func printOptions(buf *bytes.Buffer, cmdStruct *CmdOutline) error {
 	if len(cmdStruct.Flags) > 0 {
 		buf.WriteString(fmt.Sprintf("### Options\n\n```\n%s```\n\n", cmdStruct.Flags))
 	}
@@ -196,7 +196,7 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string)
 
 	buf := new(bytes.Buffer)
 
-	cmdStruct := generateCmdTemplate(cmd, linkHandler)
+	cmdStruct := generateCmdOutline(cmd, linkHandler)
 
 	buf.WriteString("## " + cmdStruct.Name + "\n\n")
 	buf.WriteString(cmdStruct.Short + "\n\n")
@@ -245,9 +245,9 @@ func GenMarkdownCustomTemplate(cmd *cobra.Command, w io.Writer, linkHandler func
 
 	buf := new(bytes.Buffer)
 
-	cmdStruct := generateCmdTemplate(cmd, linkHandler)
+	cmdStruct := generateCmdOutline(cmd, linkHandler)
 
-	cmd.DisableAutoGenTag = true
+	cmd.DisableAutoGenTag = true // TODO: make this a parameter?
 	writeToTemplate(cmdStruct, template, buf)
 
 	if !cmd.DisableAutoGenTag {
@@ -298,7 +298,7 @@ func GenMarkdownTreeCustom(cmd *cobra.Command, dir string, filePrepender, linkHa
 	return nil
 }
 
-func writeToTemplate(cmdStruct *CmdTemplate, template *template.Template, buf *bytes.Buffer) error {
+func writeToTemplate(cmdStruct *CmdOutline, template *template.Template, buf *bytes.Buffer) error {
 	err := template.Execute(buf, cmdStruct)
 	if err != nil {
 		log.Println("executing template:", err)
