@@ -22,15 +22,13 @@ func TestGenDocsCustomTemplate(t *testing.T) {
 {{subHeader .HeaderScale}} Synopsis
 {{.Long}}
 
-{{if ne .Example ""}}
-{{subHeader .HeaderScale}} Examples
+{{if ne .Example ""}}{{subHeader .HeaderScale}} Examples
 
 {{.Example}}{{end}}
 
-{{if gt (len .FlagSlice) 1}}{{subHeader .HeaderScale}} Options
+{{if gt (len .FlagSlice) 1}}{{subHeader .HeaderScale}} Flags
 
 {{.Flags}}{{end}}
-
 {{subHeader .HeaderScale}} Subcommands
 
 {{range $childLink := .ChildrenLinks}}{{$childLink}}{{end}}
@@ -61,5 +59,40 @@ func TestGenDocsCustomTemplate(t *testing.T) {
 		log.Fatal(err)
 	}
 
-	log.Println(out.String())
+	expectedOutput := `
+# root echo - Echo anything to the screen
+
+## How to Use
+
+	root echo [string to echo] [flags]
+
+## Synopsis
+an utterly useless command for testing
+
+## Examples
+
+Just run cobra-test echo
+
+## Flags
+
+  -b, --boolone          help message for flag boolone (default true)
+  -h, --help             help for echo
+  -i, --intone int       help message for flag intone (default 123)
+  -p, --persistentbool   help message for flag persistentbool
+  -s, --strone string    help message for flag strone (default "one")
+
+## Subcommands
+
+* [root echo echosub](#root-echo-echosub)	 - second sub command for echo
+* [root echo times](#root-echo-times)	 - Echo anything to the screen more times
+
+## Related commands
+
+* [root print](#root-print)	 - Print anything to the screen
+
+`
+
+	if !strings.EqualFold(out.String(), expectedOutput) {
+		t.Fatal("Generated output did not match expected output")
+	}
 }
