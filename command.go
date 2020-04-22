@@ -1132,11 +1132,11 @@ func (c *Command) RelatedCommands() []*Command {
 
 // AddRelatedCommand adds one or more related commands to this command.
 func (c *Command) AddRelatedCommand(cmds ...*Command) {
-	for i, x := range cmds {
+	for i := range cmds {
 		if cmds[i] == c {
 			panic("Command can't be related to itself")
 		}
-		c.relatedCommands = append(c.relatedCommands, x)
+		c.relatedCommands = append(c.relatedCommands, cmds[i])
 	}
 }
 
