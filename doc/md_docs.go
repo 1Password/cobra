@@ -24,13 +24,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func printOptions(buf *bytes.Buffer, cmdStruct *CmdOutline) error {
-	if len(cmdStruct.Flags) > 0 {
-		buf.WriteString(fmt.Sprintf("### Options\n\n```\n%s```\n\n", cmdStruct.Flags))
+func printOptions(buf *bytes.Buffer, cmdOutline *CmdOutline) error {
+	if len(cmdOutline.Flags) > 0 {
+		buf.WriteString(fmt.Sprintf("### Options\n\n```\n%s```\n\n", cmdOutline.Flags))
 	}
 
-	if len(cmdStruct.ParentFlags) > 0 {
-		buf.WriteString(fmt.Sprintf("### Options inherited from parent commands\n\n```\n%s```\n\n", cmdStruct.ParentFlags))
+	if len(cmdOutline.ParentFlags) > 0 {
+		buf.WriteString(fmt.Sprintf("### Options inherited from parent commands\n\n```\n%s```\n\n", cmdOutline.ParentFlags))
 	}
 	return nil
 }
@@ -47,29 +47,29 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string)
 
 	buf := new(bytes.Buffer)
 
-	cmdStruct := generateCmdOutline(cmd, linkHandler)
+	cmdOutline := generateCmdOutline(cmd, linkHandler)
 
-	buf.WriteString("## " + cmdStruct.Name + "\n\n")
-	buf.WriteString(cmdStruct.Short + "\n\n")
+	buf.WriteString("## " + cmdOutline.Name + "\n\n")
+	buf.WriteString(cmdOutline.Short + "\n\n")
 	buf.WriteString("### Synopsis\n\n")
-	buf.WriteString(cmdStruct.Long + "\n\n")
+	buf.WriteString(cmdOutline.Long + "\n\n")
 
-	if cmd.Runnable() && len(cmdStruct.UseLine) > 0 {
-		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmdStruct.UseLine))
+	if cmd.Runnable() && len(cmdOutline.UseLine) > 0 {
+		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmdOutline.UseLine))
 	}
 
-	if len(cmdStruct.Example) > 0 {
+	if len(cmdOutline.Example) > 0 {
 		buf.WriteString("### Examples\n\n")
-		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmdStruct.Example))
+		buf.WriteString(fmt.Sprintf("```\n%s\n```\n\n", cmdOutline.Example))
 	}
 
-	if err := printOptions(buf, cmdStruct); err != nil {
+	if err := printOptions(buf, cmdOutline); err != nil {
 		return err
 	}
-	if len(cmdStruct.ParentLink) > 0 || len(cmdStruct.ChildrenLinks) > 0 {
+	if len(cmdOutline.ParentLink) > 0 || len(cmdOutline.ChildrenLinks) > 0 {
 		buf.WriteString("### SEE ALSO\n\n")
-		if len(cmdStruct.ParentLink) > 0 {
-			buf.WriteString(cmdStruct.ParentLink)
+		if len(cmdOutline.ParentLink) > 0 {
+			buf.WriteString(cmdOutline.ParentLink)
 			cmd.VisitParents(func(c *cobra.Command) {
 				if c.DisableAutoGenTag {
 					cmd.DisableAutoGenTag = c.DisableAutoGenTag
@@ -77,14 +77,14 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string)
 			})
 		}
 
-		for _, childLink := range cmdStruct.ChildrenLinks {
+		for _, childLink := range cmdOutline.ChildrenLinks {
 			buf.WriteString(childLink)
 		}
 		buf.WriteString("\n")
 	}
 
 	if !cmd.DisableAutoGenTag {
-		buf.WriteString("######" + cmdStruct.AutoGenTag)
+		buf.WriteString("######" + cmdOutline.AutoGenTag)
 	}
 	_, err := buf.WriteTo(w)
 	return err
