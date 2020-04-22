@@ -93,6 +93,6 @@ Just run cobra-test echo
 `
 
 	if !strings.EqualFold(out.String(), expectedOutput) {
-		t.Fatal("Generated output did not match expected output")
+		t.Error("Generated output did not match expected output")
 	}
 }
