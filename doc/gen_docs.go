@@ -150,9 +150,9 @@ func GenDocsCustomTemplate(cmd *cobra.Command, w io.Writer, linkHandler func(str
 
 	buf := new(bytes.Buffer)
 
-	cmdStruct := generateCmdOutline(cmd, linkHandler)
+	cmdOutline := generateCmdOutline(cmd, linkHandler)
 
-	err := writeToTemplate(cmdStruct, template, buf)
+	err := writeToTemplate(cmdOutline, template, buf)
 	if err != nil {
 		return err
 	}
