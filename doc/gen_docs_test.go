@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"path"
 	"strings"
 	"testing"
 	"text/template"
@@ -47,9 +46,7 @@ func TestGenDocsCustomTemplate(t *testing.T) {
 	}).Parse(cmdTpl))
 
 	linkHandler := func(name string) string {
-		base := strings.TrimSuffix(name, path.Ext(name))
-		base = strings.Replace(base, "_", "-", -1)
-		return fmt.Sprintf("#%s", base)
+		return fmt.Sprintf("#%s", name)
 	}
 
 	out := new(bytes.Buffer)

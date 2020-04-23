@@ -47,7 +47,7 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string)
 
 	buf := new(bytes.Buffer)
 
-	cmdOutline := generateCmdOutline(cmd, linkHandler)
+	cmdOutline := generateCmdOutline(cmd, linkHandler, mdDefaultLinkHandler)
 
 	buf.WriteString("## " + cmdOutline.Name + "\n\n")
 	buf.WriteString(cmdOutline.Short + "\n\n")
@@ -88,6 +88,12 @@ func GenMarkdownCustom(cmd *cobra.Command, w io.Writer, linkHandler func(string)
 	}
 	_, err := buf.WriteTo(w)
 	return err
+}
+
+func mdDefaultLinkHandler(name string) string {
+	link := name + ".md"
+	link = strings.Replace(link, " ", "_", -1)
+	return link
 }
 
 // GenMarkdownTree will generate a markdown page for this command and all
