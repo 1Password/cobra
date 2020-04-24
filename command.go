@@ -166,6 +166,8 @@ type Command struct {
 		name   string
 		called bool
 	}
+	// related commands is the list of commands related to this command.
+	relatedCommands []*Command
 
 	// args is actual args parsed from flags.
 	args []string
@@ -1120,6 +1122,21 @@ func (c *Command) AddCommand(cmds ...*Command) {
 		}
 		c.commands = append(c.commands, x)
 		c.commandsAreSorted = false
+	}
+}
+
+// RelatedCommands returns a slice of related commands.
+func (c *Command) RelatedCommands() []*Command {
+	return c.relatedCommands
+}
+
+// AddRelatedCommand adds one or more related commands to this command.
+func (c *Command) AddRelatedCommand(cmds ...*Command) {
+	for i := range cmds {
+		if cmds[i] == c {
+			panic("Command can't be related to itself")
+		}
+		c.relatedCommands = append(c.relatedCommands, cmds[i])
 	}
 }
 
