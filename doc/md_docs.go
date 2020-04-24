@@ -21,7 +21,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/cobra"
+	"github.com/1password/cobra"
 )
 
 func printOptions(buf *bytes.Buffer, cmdOutline *CmdOutline) error {
